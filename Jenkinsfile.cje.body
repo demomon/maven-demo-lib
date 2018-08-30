@@ -1,0 +1,89 @@
+stages {
+    stage('Test versions') {
+        steps {
+            sh 'uname -a'
+            sh 'mvn -version'
+        }
+    }
+    stage('Checkout') {
+        steps {
+            script {
+                scmVars = checkout scm
+            }
+            echo "scmVars=${scmVars}"
+            //gitRemoteConfig('joostvdg', 'maven-demo-lib', 'githubtoken')
+            gitRemoteConfigByUrl(scmVars.GIT_URL, 'githubtoken')
+            sh '''
+            git config --global user.email "jenkins@jenkins.io"
+            git config --global user.name "Jenkins"
+            '''
+            //sh 'env'
+        }
+    }
+    stage('Build') {
+        steps {
+            sh 'mvn clean verify -B -e'
+        }
+        post {
+            success {
+                junit 'target/surefire-reports/**/*.xml'
+            }
+        }
+    }
+    stage('Version & Analysis') {
+        parallel {
+            stage('Version Bump') {
+                when {
+                    expression {
+                        NEW_VERSION = gitNextSemverTagMaven('pom.xml')
+                        return env.BRANCH_NAME == 'master' &&  NEW_VERSION != ''
+                    }
+                }
+                steps {
+                    sh "mvn versions:set -DnewVersion=${NEW_VERSION}"
+                    gitTag("v${NEW_VERSION}")
+                }
+            }
+            stage('Sonar Analysis') {
+                when {
+                    expression {
+                        "${env.BRANCH_NAME}" == 'master' &&
+                            '200' == toolHealthCheck('http://sonar-sonarqube:9000/api/system/health')
+                    }
+                }
+                environment {
+                    SONAR_HOST="http://sonar-sonarqube:9000"
+                    SONAR_TOKEN=credentials('sonar')
+                }
+                steps {
+                    sh 'mvn sonar:sonar -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_TOKEN}'
+                }
+            }
+        }
+    }
+    stage('Publish Artifact') {
+        when {
+            expression {
+                "${env.BRANCH_NAME}" == 'master' &&
+                    '200' == toolHealthCheck('http://artifactory.127.0.0.1.nip.io/artifactory/')
+            }
+        }
+        steps {
+            // #1 = credentialsId for artifactory
+            // #2 = distributionManagement.id
+            generateMavenSettings('artifactory', 'releases')
+            sh 'mvn deploy -s jenkins-settings.xml'
+        }
+        post {
+            always {
+                cleanMavenSettings()
+            }
+        }
+    }
+}
+post {
+    always {
+        cleanWs()
+    }
+}
+
