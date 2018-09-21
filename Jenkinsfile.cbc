@@ -38,8 +38,10 @@ spec:
     stages {
         stage('Test versions') {
             steps {
-                sh 'uname -a'
-                sh 'mvn -version'
+                container('maven') {
+                    sh 'uname -a'
+                    sh 'mvn -version'
+                }
             }
         }
         stage('Checkout') {
@@ -57,7 +59,9 @@ spec:
         }
         stage('Build') {
             steps {
-                sh 'mvn clean verify -B -e'
+                container('maven') {
+                    sh 'mvn clean verify -B -e'
+                }
             }
             post {
                 success {
@@ -75,7 +79,9 @@ spec:
                         }
                     }
                     steps {
-                        sh "mvn versions:set -DnewVersion=${NEW_VERSION}"
+                        container('maven') {
+                            sh "mvn versions:set -DnewVersion=${NEW_VERSION}"
+                        }
                         gitTag("v${NEW_VERSION}")
                     }
                 }
@@ -91,7 +97,9 @@ spec:
                         SONAR_TOKEN=credentials('sonar')
                     }
                     steps {
-                        sh 'mvn sonar:sonar -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_TOKEN}'
+                        container('maven') {
+                            sh 'mvn sonar:sonar -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_TOKEN}'
+                        }
                     }
                 }
             }
@@ -106,8 +114,10 @@ spec:
             steps {
                 // #1 = credentialsId for artifactory
                 // #2 = distributionManagement.id
-                generateMavenSettings('artifactory', 'releases')
-                sh 'mvn deploy -s jenkins-settings.xml'
+                container('maven') {
+                    generateMavenSettings('artifactory', 'releases')
+                    sh 'mvn deploy -s jenkins-settings.xml'
+                }
             }
             post {
                 always {
