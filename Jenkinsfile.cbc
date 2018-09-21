@@ -139,6 +139,16 @@ spec:
     }
     post {
         always {
+            // TODO: Obviously, we shouldn't do this
+            publishEvent jsonEvent('''{
+                "ArtifactEvent": {
+                    "Artifacts": [{
+                        "groupId": "com.github.joostvdg.demo",
+                        "artifactId": "maven-demo-lib",
+                        "version": "1.0.0"
+                    }]
+                }
+            }''')
             cleanWs()
         }
     }
