@@ -7,7 +7,7 @@ pipeline {
         timeout(5)
     }
     libraries {
-        lib('joostvdg@master')
+        lib('jenkins-pipeline-library@master')
     }
     agent {
         kubernetes {
