@@ -3,11 +3,11 @@ def scmVars
 pipeline {
     options {
         buildDiscarder logRotator(artifactDaysToKeepStr: '5', artifactNumToKeepStr: '5', daysToKeepStr: '5', numToKeepStr: '5')
-        durabilityHint 'PERFORMANCE_OPTIMIZED'
-        timeout(5)
+        timeout(15)
     }
     libraries {
-        lib('jenkins-pipeline-library@master')
+        lib('core@master')
+        lib('maven@master')
     }
     agent {
         kubernetes {

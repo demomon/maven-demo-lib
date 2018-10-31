@@ -10,7 +10,15 @@
 
   <name>maven-demo-lib</name>
   <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>https://www.github.com/demomon/maven-demo-lib</url>
+
+  <developers>
+    <developer>
+      <id>joostvdg</id>
+      <name>Joost van der Griendt</name>
+      <email>joostvdg@gmail.com</email>
+    </developer>
+  </developers>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
